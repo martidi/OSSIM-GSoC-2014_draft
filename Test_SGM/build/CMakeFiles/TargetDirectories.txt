@@ -1,0 +1,1 @@
+/home/martina/Scrivania/GSoC/Prove_OpenCV/TEST_SGM/build/CMakeFiles/Test.dir
