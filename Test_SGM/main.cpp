@@ -69,18 +69,13 @@ int main(int argc, const char* argv[])
 		{ 
 			good_matches.push_back( matches[i]);
 
-			//cout << " " << matches[i].queryIdx << " " << matches[i].trainIdx << " " << matches[i].imgIdx;
-
 		    cout << i << " " << keypoints1[i].pt.x << " "
 		              << keypoints1[i].pt.y << " "
 		              << keypoints2[matches[i].trainIdx].pt.x << " "
 		              << keypoints2[matches[i].trainIdx].pt.y 
 		              <<endl;
-	
-	    }
-	  // Computing parallax error
-	 //matches[i].pt
-	  
+		    }
+
 	}
 
 	Mat img_matches;
