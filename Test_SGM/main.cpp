@@ -18,7 +18,6 @@ char *windowMatch = "TP matched";
 
 int main(int argc, const char* argv[])
 {
-
 	cout <<"File Left:  "<< argv[1] <<"\n";
 	cout <<"File Right: "<< argv[2] <<"\n";
 
@@ -27,47 +26,11 @@ int main(int argc, const char* argv[])
 	
 	if( !imgLeft.data || !imgRight.data )
 	{ std::cout<< " --(!) Error reading images " << std::endl; return -1; }
-
+	
 	//resampling
 	Mat outputLeft, outputRight;
-	resize(imgLeft, outputLeft, Size(), 1.0, 1.0, INTER_AREA);
-	resize(imgRight, outputRight, Size(),1.0, 1.0, INTER_AREA);
-
-	Mat imgDisparity16S = Mat( outputLeft.rows, outputLeft.cols, CV_16S );
-	Mat imgDisparity8U  = Mat( outputLeft.rows, outputLeft.cols, CV_8UC1 );
-
-	int ndisparities = 16*3;   /**< Range of disparity */
-	int SADWindowSize = 3;    /**< Size of the block window. Must be odd */
-
-	StereoSGBM sgbm;
-
-	sgbm.preFilterCap = 63;
-	sgbm.SADWindowSize = SADWindowSize > 0 ? SADWindowSize : 3;
-
-	int cn = outputLeft.channels();
-
-	sgbm.P1 = 8*cn*sgbm.SADWindowSize*sgbm.SADWindowSize;
-	sgbm.P2 = 32*cn*sgbm.SADWindowSize*sgbm.SADWindowSize;
-	sgbm.minDisparity = 0;
-	sgbm.numberOfDisparities = ndisparities;
-	sgbm.uniquenessRatio = 10;
-	sgbm.speckleWindowSize = 100;
-	sgbm.speckleRange = 32;
-	sgbm.disp12MaxDiff = 1;
-	
-	Mat disp,disp8U;
-
-	sgbm(outputLeft, outputRight, disp);
-
-	double minVal; double maxVal;
-
-	minMaxLoc( disp, &minVal, &maxVal );
-
-	disp.convertTo( disp8U, CV_8UC1, 255/(maxVal - minVal));
-
-	namedWindow( windowDisparitySGM, CV_WINDOW_NORMAL );
-	imshow( windowDisparitySGM, disp8U );
-	
+	resize(imgLeft, outputLeft, Size(), 0.5, 0.5, INTER_AREA);
+	resize(imgRight, outputRight, Size(), 0.5, 0.5, INTER_AREA);
 
 	//computing detector
 	OrbFeatureDetector detector(400);
@@ -95,14 +58,29 @@ int main(int argc, const char* argv[])
 		if( dist > max_dist ) max_dist = dist;
 	}
 
-	printf("-- Max dist : %f \n", max_dist );
-	printf("-- Min dist : %f \n", min_dist );
+	cout <<"Max dist:  "<< max_dist <<"\n";
+	cout <<"Min dist: "<< min_dist <<"\n";
 
 	vector< DMatch > good_matches;
 
 	for( int i = 0; i < descriptors1.rows; i++ )
-	{ if( matches[i].distance <= max(2*min_dist, 250.50) )
-		{ good_matches.push_back( matches[i]); }
+	{
+		if(matches[i].distance <= max(2*min_dist, 200.50))
+		{ 
+			good_matches.push_back( matches[i]);
+
+			//cout << " " << matches[i].queryIdx << " " << matches[i].trainIdx << " " << matches[i].imgIdx;
+
+		    cout << i << " " << keypoints1[i].pt.x << " "
+		              << keypoints1[i].pt.y << " "
+		              << keypoints2[matches[i].trainIdx].pt.x << " "
+		              << keypoints2[matches[i].trainIdx].pt.y 
+		              <<endl;
+	
+	    }
+	  // Computing parallax error
+	 //matches[i].pt
+	  
 	}
 
 	Mat img_matches;
@@ -112,6 +90,42 @@ int main(int argc, const char* argv[])
 
   	namedWindow( windowMatch, CV_WINDOW_NORMAL );
 	imshow( windowMatch, img_matches );
+	
+	// Disparity Map generation
+	Mat imgDisparity16S = Mat( imgLeft.rows, imgLeft.cols, CV_16S );
+	Mat imgDisparity8U  = Mat( imgLeft.rows, imgLeft.cols, CV_8UC1 );
+
+	int ndisparities = 16*2;   /**< Range of disparity */
+	int SADWindowSize = 3;    /**< Size of the block window. Must be odd */
+
+	StereoSGBM sgbm;
+
+	sgbm.preFilterCap = 63;
+	sgbm.SADWindowSize = SADWindowSize > 0 ? SADWindowSize : 3;
+
+	int cn = outputLeft.channels();
+
+	sgbm.P1 = 8*cn*sgbm.SADWindowSize*sgbm.SADWindowSize;
+	sgbm.P2 = 32*cn*sgbm.SADWindowSize*sgbm.SADWindowSize;
+	sgbm.minDisparity = 0;
+	sgbm.numberOfDisparities = ndisparities;
+	sgbm.uniquenessRatio = 10;
+	sgbm.speckleWindowSize = 100;
+	sgbm.speckleRange = 32;
+	sgbm.disp12MaxDiff = 1;
+	
+	Mat disp,disp8U;
+
+	sgbm(imgLeft, imgRight, disp);
+
+	double minVal; double maxVal;
+
+	minMaxLoc( disp, &minVal, &maxVal );
+
+	disp.convertTo( disp8U, CV_8UC1, 255/(maxVal - minVal));
+
+	namedWindow( windowDisparitySGM, CV_WINDOW_NORMAL );
+	imshow( windowDisparitySGM, disp8U );
 	
 	waitKey(0);
 
