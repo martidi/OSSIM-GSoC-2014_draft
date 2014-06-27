@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project( Prove_OpenCV )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( Test_AFFINE main.cpp )
+target_link_libraries( Test_AFFINE ${OpenCV_LIBS} )

@@ -1,0 +1,1 @@
+/home/martina/Scrivania/GSoC/Prove_OpenCV/TEST_AFFINE/build/CMakeFiles/Test_AFFINE.dir
