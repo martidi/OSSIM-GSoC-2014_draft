@@ -47,7 +47,7 @@
 
 using namespace std;
 
-bool ortho (ossimArgumentParser argPars )
+bool ortho (ossimArgumentParser argPars)
 {
       // Make the generator.
       ossimRefPtr<ossimChipperUtil> chipper = new ossimChipperUtil;
@@ -78,7 +78,7 @@ bool ortho (ossimArgumentParser argPars )
 
 static ossimTrace traceDebug = ossimTrace("ossim-chipper:debug");
 
-int main(int argc, char *argv[])
+int main(int argc,  char *argv[])
 {
    // Initialize ossim stuff, factories, plugin, etc.
    ossimTimer::instance()->setStartTick();
@@ -87,52 +87,77 @@ int main(int argc, char *argv[])
    		ossimInit::instance()->initialize(ap);
 -----*/
    	try
-   		{  
+   		{ 
       	// Put your code here.
-        int originalArgCount = 5;
-    	char * pluto[5];
+        char* argv_master[10];
+        char* argv_slave[10];
+        
+        cout << "MASTER DIRECTORY:" << " " << argv[1] << endl;
+        cout << "SLAVE DIRECTORY:"  << " " << argv[2] << endl;
+
+        // PREPARAZIONE ARGV MASTER E SLAVE
+
 		//pluto è una stringa di array di array di caratteri
-		pluto[0] = "ossim-chipper";
-		pluto[1] = "--op";
-		pluto[2] = "ortho";
+		argv_master[0] = "ossim-chipper";
+		argv_master[1] = "--op";
+		argv_master[2] = "ortho";
+		argv_master[3] = argv[1];
+		argv_master[4] = argv[3];
 		//pluto[3] = "-P ";
 		//pluto[4] = "../../../../preferences/ossim_prefs.txt";
-		pluto[3] = "../../../../../img_data/po_3800808_0000000/po_3800808_pan_0000000.tif";
-		pluto[4] = "../../../../../img_data/risultati_epipolar/ortho_ouput1.jpg";
+		//argv[4] = "../../../../../img_data/po_3800808_0000000/po_3800808_pan_0000000.tif";
+		//argv[5] = "../../../../../img_data/risultati_epipolar/ortho_ouput1.jpg";
 
- 		cout << "N arg = " << argc << endl;
-		cout << argv[0] << endl;
-		cout << pluto[3] << endl;
-		cout << pluto[4] << endl;
+		argv_slave[0] =  "ossim-chipper";
+		argv_slave[1] =  "--op";
+		argv_slave[2] =  "ortho";
+		argv_slave[3] = argv[2];
+		argv_slave[4] = argv[4];
 
-		ossimArgumentParser ap_master(&originalArgCount, pluto);
-		cout << "Start master orthorectification" << endl;
-		//ortho(ap_master); //sto chiamando la funzione, dandogli ap come input, che poi lui sostituirà con argPars dato che gli ho detto che ortho prende argPars (è come se ci fosse argPars=ap)
-		// Initialize ossim stuff, factories, plugin, etc.
-		//ossimInit::instance()->initialize(ap_master);
-
-		//gli do nuova img in input e gli dico nuovo output
+        int originalArgCount = 5;
 		int originalArgCount2 = 5;
-		char * pluto2[5];
-		pluto2[0] = "ossim-chipper";
-		pluto2[1] = "--op";
-		pluto2[2] = "ortho";
-		//pluto2[3] = "-P";
-		//pluto2[4] = "../../../../preferences/ossim_prefs.txt";
-		pluto2[3] = "../../../../../img_data/po_3800808_0010000/po_3800808_pan_0010000.tif";
-		pluto2[4] = "../../../../../img_data/risultati_epipolar/ortho_ouput2.jpg";
-   
-		//definisco ap_slave
-		ossimArgumentParser ap_slave(&originalArgCount2, pluto2);
-		cout << "Start slave orthorectification" << endl;
-		//ortho(ap_slave);
 
+		if(argc == 10) 
+		{
+			argv_master[5] = argv[5];
+			argv_master[6] = argv[6];
+			argv_master[7] = argv[7];
+			argv_master[8] = argv[8];
+			argv_master[9] = argv[9];
+
+			argv_slave[5] = argv[5];
+			argv_slave[6] = argv[6];
+			argv_slave[7] = argv[7];
+			argv_slave[8] = argv[8];
+			argv_slave[9] = argv[9];
+
+			originalArgCount = 10;
+			originalArgCount2 = 10;
+
+        	cout << "TILE CUT:" << " " << "Lat_min" << " " << argv[6] 
+        						<< " " << "Lon_min" << " " << argv[7]
+        						<< " " << "Lat_max" << " " << argv[8]
+        						<< " " << "Lon_max" << " " << argv[9] << endl;
+		}	
+
+		// ORTHORECTIFICATION
+
+		cout << "Start master orthorectification" << endl;
+		ossimArgumentParser ap_master(&originalArgCount, argv_master);
+		ortho(ap_master); //sto chiamando la funzione, dandogli ap_master come input, che poi lui sostituirà con argPars dato che gli ho detto che ortho prende argPars (è come se ci fosse argPars=ap)
 		// Initialize ossim stuff, factories, plugin, etc.
-		//ossimInit::instance()->initialize(ap_slave);
+		// ossimInit::instance()->initialize(ap_master);
+
+		//definisco ap_slave
+		cout << "Start slave orthorectification" << endl;
+		ossimArgumentParser ap_slave(&originalArgCount2, argv_slave);
+		ortho(ap_slave);
        
-        ossimImageHandler* master_handler = ossimImageHandlerRegistry::instance()->open(ossimFilename("../../../../../img_data/risultati_epipolar/ortho_ouput1.jpg"));
-        ossimImageHandler* slave_handler = ossimImageHandlerRegistry::instance()->open(ossimFilename("../../../../../img_data/risultati_epipolar/ortho_ouput2.jpg"));
-        if(master_handler && slave_handler) //se esistono sia master che slave
+		// TP GENERATOR
+
+        ossimImageHandler* master_handler = ossimImageHandlerRegistry::instance()->open(ossimFilename(argv[3]));
+        ossimImageHandler* slave_handler = ossimImageHandlerRegistry::instance()->open(ossimFilename(argv[4]));
+        if(master_handler && slave_handler) // enter if exist both master and slave  
       		{
       		ossimIrect bounds_master = master_handler->getBoundingRect(0);
       		ossimIrect bounds_slave = slave_handler->getBoundingRect(0);      		
@@ -140,14 +165,16 @@ int main(int argc, char *argv[])
       		ossimRefPtr<ossimImageData> img_slave = slave_handler->getTile(bounds_slave, 0); 
       		openCVtestclass* test = new openCVtestclass(img_master, img_slave);
       		test->run();
-
 	   		test->TPgen();
 	   		test->TPdraw();
+	   		test->warp();
 			}      
-    	
-		// test è puntatore ad oggetto di tipo openCVtestclass, mi permette di accedere ai metodi ed alle variabili della classe 
+    	// test è puntatore ad oggetto di tipo openCVtestclass, mi permette di accedere ai metodi ed alle variabili della classe 
        	// con new sto istanziando la classe, richiamando il costruttore	  
 		
+		// WARP
+
+
 		}
    catch (const ossimException& e)
 		{
@@ -157,3 +184,6 @@ int main(int argc, char *argv[])
    
    return 0;
 }
+
+
+/*./bin/ossim-opencv ../../../../img_data/po_3800808_0000000/po_3800808_pan_0000000.tif ../../../../img_data/po_3800808_0010000/po_3800808_pan_0010000.tif ../../../../img_data/risultati_epipolar/ortho_ritaglio1.jpg ../../../../img_data/risultati_epipolar/ortho_ritaglio2.jpg --cut-bbox-ll 44.603 11.816 44.623 11.851 */

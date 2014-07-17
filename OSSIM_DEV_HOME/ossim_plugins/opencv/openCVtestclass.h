@@ -20,6 +20,9 @@ public:
    void run();
    void TPgen();
    void TPdraw();
+   cv::Mat estRT(std::vector<cv::Point2f> master, std::vector<cv::Point2f> slave);
+   void warp();
+   void disparity();
    
    cv::Mat master_mat, slave_mat;
    cv::vector<cv::KeyPoint> keypoints1, keypoints2;
