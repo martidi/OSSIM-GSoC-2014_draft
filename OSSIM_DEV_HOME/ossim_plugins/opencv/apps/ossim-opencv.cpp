@@ -156,12 +156,6 @@ int main(int argc,  char *argv[])
 	   		  test->TPdraw();
 	   		  test->warp();                  
 			    }      
-		      
-          if(master_handler && slave_handler) // enter if exist both master and slave  
-          {
-          DisparityMap* map = new DisparityMap(img_master, img_slave);
-          map->execute();
-          } 
 
 		  }
    catch (const ossimException& e)
