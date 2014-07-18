@@ -15,7 +15,6 @@
 //
 // $Id: ossim-opencv.cpp 20095 2011-09-14 14:37:26Z dburken $
 //----------------------------------------------------------------------------
-
 #include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimApplicationUsage.h>
 #include <ossim/base/ossimConstants.h> 
@@ -30,6 +29,7 @@
 #include <ossim/util/ossimChipperUtil.h>
 
 #include "openCVtestclass.h"
+#include "DisparityMap.h"
 #include "ossimTieMeasurementGenerator.h"
 
 #include "opencv2/core/core.hpp"
@@ -82,31 +82,21 @@ int main(int argc,  char *argv[])
 {
    // Initialize ossim stuff, factories, plugin, etc.
    ossimTimer::instance()->setStartTick();
-  /*	ossimArgumentParser ap(&argc, argv);
-   		ossimInit::instance()->addOptions(ap);
-   		ossimInit::instance()->initialize(ap);
------*/
    	try
    		{ 
-      	// Put your code here.
         char* argv_master[10];
         char* argv_slave[10];
         
         cout << "MASTER DIRECTORY:" << " " << argv[1] << endl;
         cout << "SLAVE DIRECTORY:"  << " " << argv[2] << endl;
 
-        // PREPARAZIONE ARGV MASTER E SLAVE
+        // MAKING ARGV MASTER E SLAVE
 
-		//pluto è una stringa di array di array di caratteri
 		argv_master[0] = "ossim-chipper";
 		argv_master[1] = "--op";
 		argv_master[2] = "ortho";
 		argv_master[3] = argv[1];
 		argv_master[4] = argv[3];
-		//pluto[3] = "-P ";
-		//pluto[4] = "../../../../preferences/ossim_prefs.txt";
-		//argv[4] = "../../../../../img_data/po_3800808_0000000/po_3800808_pan_0000000.tif";
-		//argv[5] = "../../../../../img_data/risultati_epipolar/ortho_ouput1.jpg";
 
 		argv_slave[0] =  "ossim-chipper";
 		argv_slave[1] =  "--op";
@@ -114,7 +104,7 @@ int main(int argc,  char *argv[])
 		argv_slave[3] = argv[2];
 		argv_slave[4] = argv[4];
 
-        int originalArgCount = 5;
+    int originalArgCount = 5;
 		int originalArgCount2 = 5;
 
 		if(argc == 10) 
@@ -144,11 +134,8 @@ int main(int argc,  char *argv[])
 
 		cout << "Start master orthorectification" << endl;
 		ossimArgumentParser ap_master(&originalArgCount, argv_master);
-		ortho(ap_master); //sto chiamando la funzione, dandogli ap_master come input, che poi lui sostituirà con argPars dato che gli ho detto che ortho prende argPars (è come se ci fosse argPars=ap)
-		// Initialize ossim stuff, factories, plugin, etc.
-		// ossimInit::instance()->initialize(ap_master);
-
-		//definisco ap_slave
+		ortho(ap_master); 
+	
 		cout << "Start slave orthorectification" << endl;
 		ossimArgumentParser ap_slave(&originalArgCount2, argv_slave);
 		ortho(ap_slave);
@@ -165,17 +152,18 @@ int main(int argc,  char *argv[])
       		ossimRefPtr<ossimImageData> img_slave = slave_handler->getTile(bounds_slave, 0); 
       		openCVtestclass* test = new openCVtestclass(img_master, img_slave);
       		test->run();
-	   		test->TPgen();
-	   		test->TPdraw();
-	   		test->warp();
-			}      
-    	// test è puntatore ad oggetto di tipo openCVtestclass, mi permette di accedere ai metodi ed alle variabili della classe 
-       	// con new sto istanziando la classe, richiamando il costruttore	  
-		
-		// WARP
+	   		  test->TPgen();
+	   		  test->TPdraw();
+	   		  test->warp();                  
+			    }      
+		      
+          if(master_handler && slave_handler) // enter if exist both master and slave  
+          {
+          DisparityMap* map = new DisparityMap(img_master, img_slave);
+          map->execute();
+          } 
 
-
-		}
+		  }
    catch (const ossimException& e)
 		{
      	 	ossimNotify(ossimNotifyLevel_WARN) << e.what() << endl;
@@ -184,6 +172,5 @@ int main(int argc,  char *argv[])
    
    return 0;
 }
-
 
 /*./bin/ossim-opencv ../../../../img_data/po_3800808_0000000/po_3800808_pan_0000000.tif ../../../../img_data/po_3800808_0010000/po_3800808_pan_0010000.tif ../../../../img_data/risultati_epipolar/ortho_ritaglio1.jpg ../../../../img_data/risultati_epipolar/ortho_ritaglio2.jpg --cut-bbox-ll 44.603 11.816 44.623 11.851 */
